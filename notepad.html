@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>b2kproedit</title>
+<style>
+  :root{
+    --wall-1: #e7ddcd;
+    --wall-2: #cdbfa9;
+    --wall-3: #a9977d;
+    --wood: #c8a878;
+    --wood-dark: #a9835a;
+    --glass: rgba(255,255,255,0.4);
+    --glass-strong: rgba(255,255,255,0.62);
+    --glass-border: rgba(255,255,255,0.8);
+    --glass-hi: rgba(255,255,255,0.95);
+    --text-1: #2a2622;
+    --text-2: rgba(42,38,34,0.56);
+    --text-3: rgba(42,38,34,0.36);
+    --accent: #3d7dfb;
+    --accent-soft: rgba(61,125,251,0.14);
+    --shadow: 0 30px 80px rgba(60,46,26,0.28);
+    --radius-lg: 34px;
+    --radius-md: 22px;
+    --radius-sm: 14px;
+    --glow-color: rgba(255,255,255,0.4);
+  }
+  [data-theme="dark"]{
+    --wall-1: #2a2926;
+    --wall-2: #1c1b19;
+    --wall-3: #100f0e;
+    --wood: #4a3b2a;
+    --wood-dark: #2e2318;
+    --glass: rgba(40,38,36,0.42);
+    --glass-strong: rgba(50,48,45,0.62);
+    --glass-border: rgba(255,255,255,0.14);
+    --glass-hi: rgba(255,255,255,0.16);
+    --text-1: #f2f0ec;
+    --text-2: rgba(242,240,236,0.62);
+    --text-3: rgba(242,240,236,0.36);
+    --accent: #5b9bff;
+    --accent-soft: rgba(91,155,255,0.18);
+    --shadow: 0 30px 80px rgba(0,0,0,0.55);
+    --glow-color: rgba(120,150,255,0.22);
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",Inter,system-ui,sans-serif;
+    color:var(--text-1);
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:40px 20px;
+    position:relative;
+    overflow-x:hidden;
+    background:var(--wall-2);
+    transition:background 0.4s ease;
+  }
+
+  .bg-wash{
+    position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:
+      radial-gradient(1200px 700px at 15% 10%, var(--wall-1), transparent 60%),
+      radial-gradient(1000px 800px at 85% 20%, var(--wall-2), transparent 55%),
+      radial-gradient(1400px 900px at 50% 100%, var(--wall-3), transparent 60%);
+  }
+  .blob{position:fixed;border-radius:50%;filter:blur(100px);z-index:0;pointer-events:none;opacity:0.45;}
+  .blob1{width:560px;height:560px;background:radial-gradient(circle,#f2e6d0,transparent 70%);top:-160px;left:-110px;animation:float1 42s ease-in-out infinite;}
+  .blob2{width:480px;height:480px;background:radial-gradient(circle,#ddc7a8,transparent 70%);top:20%;right:-150px;animation:float2 50s ease-in-out infinite;}
+  .blob3{width:520px;height:520px;background:radial-gradient(circle,#c8a878,transparent 70%);bottom:-170px;left:20%;animation:float3 46s ease-in-out infinite;}
+  [data-theme="dark"] .blob1{background:radial-gradient(circle,#3a3733,transparent 70%);}
+  [data-theme="dark"] .blob2{background:radial-gradient(circle,#2e2c2a,transparent 70%);}
+  [data-theme="dark"] .blob3{background:radial-gradient(circle,#242220,transparent 70%);}
+  @keyframes float1{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(40px,30px) scale(1.04);}}
+  @keyframes float2{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(-35px,35px) scale(1.05);}}
+  @keyframes float3{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(30px,-25px) scale(1.03);}}
+
+  .cursor-glow{
+    position:fixed;width:420px;height:420px;border-radius:50%;
+    background:radial-gradient(circle, var(--glow-color), transparent 70%);
+    filter:blur(30px);pointer-events:none;z-index:0;
+    transform:translate(-50%,-50%);
+    left:50%;top:50%;
+    opacity:0;transition:opacity 0.4s ease;
+  }
+
+  .stage{
+    width:100%;
+    max-width:1180px;
+    position:relative;
+    z-index:1;
+    padding-bottom:70px;
+  }
+  .stand{
+    position:absolute;
+    left:50%;
+    bottom:0;
+    width:180px;
+    height:70px;
+    transform:translateX(-50%);
+    z-index:0;
+    pointer-events:none;
+  }
+  .stand::before{
+    content:"";
+    position:absolute;
+    top:0;left:50%;
+    width:140px;height:14px;
+    background:linear-gradient(180deg, var(--wood), var(--wood-dark));
+    border-radius:8px;
+    transform:translateX(-50%);
+    box-shadow:0 10px 18px rgba(60,40,20,0.25);
+  }
+  .stand::after{
+    content:"";
+    position:absolute;
+    top:12px;left:50%;
+    width:8px;height:52px;
+    background:linear-gradient(180deg, var(--wood), var(--wood-dark));
+    border-radius:0 0 4px 4px;
+    transform:translateX(-50%);
+  }
+  .stand-leg{
+    position:absolute;top:22px;
+    width:6px;height:44px;
+    background:linear-gradient(180deg, var(--wood), var(--wood-dark));
+    border-radius:0 0 4px 4px;
+  }
+  .stand-leg.l{left:22px;transform:rotate(12deg);transform-origin:top center;}
+  .stand-leg.r{right:22px;transform:rotate(-12deg);transform-origin:top center;}
+  .board{
+    position:relative;
+    background:var(--glass);
+    backdrop-filter:blur(46px) saturate(180%);
+    -webkit-backdrop-filter:blur(46px) saturate(180%);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow), inset 0 1px 0 var(--glass-hi);
+    padding:20px 22px 24px;
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+    overflow:hidden;
+  }
+  .board::before{
+    content:"";
+    position:absolute;top:0;left:0;right:0;height:1px;
+    background:linear-gradient(90deg, transparent, var(--glass-hi), transparent);
+  }
+
+  .brand{
+    font-size:13px;font-weight:600;letter-spacing:0.02em;
+    color:var(--text-2);
+    padding:6px 4px;
+    flex-shrink:0;
+    white-space:nowrap;
+  }
+
+  /* Top bar */
+  .topbar{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:6px 8px;
+  }
+  .who{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:var(--glass-strong);
+    border:1px solid var(--glass-border);
+    border-radius:999px;
+    padding:6px 14px 6px 6px;
+    flex-shrink:0;
+    cursor:pointer;
+    transition:background 0.15s ease;
+  }
+  .who:hover{background:var(--glass-hi);}
+  .who:hover .edit-hint{opacity:1;}
+  .avatar{
+    width:32px;height:32px;border-radius:50%;
+    background:linear-gradient(135deg,#8f8f8f,#4a4a4a);
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-size:13px;font-weight:600;
+    flex-shrink:0;
+  }
+  .who span.name{font-size:14px;font-weight:500;color:var(--text-1);}
+  .edit-hint{font-size:10px;color:var(--text-3);opacity:0;transition:opacity 0.15s ease;}
+
+  .searchbar{
+    flex:1;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:var(--glass-strong);
+    border:1px solid var(--glass-border);
+    border-radius:999px;
+    padding:10px 18px;
+    min-width:0;
+  }
+  .searchbar svg{flex-shrink:0;opacity:0.5;}
+  .searchbar input{
+    border:none;background:transparent;outline:none;
+    font-size:14px;color:var(--text-1);width:100%;
+    font-family:inherit;
+  }
+  .searchbar input::placeholder{color:var(--text-3);}
+
+  .theme-toggle{
+    display:flex;align-items:center;gap:4px;
+    background:var(--glass-strong);
+    border:1px solid var(--glass-border);
+    border-radius:999px;
+    padding:4px;
+    flex-shrink:0;
+  }
+  .theme-toggle button{
+    border:none;background:transparent;
+    padding:7px 13px;
+    border-radius:999px;
+    font-size:13px;font-weight:500;
+    color:var(--text-2);
+    cursor:pointer;
+    display:flex;align-items:center;gap:6px;
+    font-family:inherit;
+    transition:all 0.2s ease;
+  }
+  .theme-toggle button.active{
+    background:var(--text-1);
+    color:var(--wall-1);
+  }
+  [data-theme="dark"] .theme-toggle button.active{
+    background:#f2f0ec;
+    color:#1c1b19;
+  }
+
+  .icon-circle{
+    width:38px;height:38px;border-radius:50%;
+    background:var(--glass-strong);
+    border:1px solid var(--glass-border);
+    color:var(--text-1);
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;flex-shrink:0;position:relative;
+    transition:background 0.15s ease;
+  }
+  .icon-circle:hover{background:var(--glass-hi);}
+  .notif-dot{
+    position:absolute;top:7px;right:8px;
+    width:8px;height:8px;border-radius:50%;
+    background:#e5484d;border:1.5px solid var(--wall-2);
+    display:none;
+  }
+  .notif-dot.show{display:block;}
+  .notif-wrap{position:relative;flex-shrink:0;}
+  .notif-panel{
+    position:absolute;top:48px;right:0;
+    width:290px;
+    background:var(--glass-strong);
+    backdrop-filter:blur(40px) saturate(180%);
+    -webkit-backdrop-filter:blur(40px) saturate(180%);
+    border:1px solid var(--glass-border);
+    border-radius:18px;
+    box-shadow:var(--shadow);
+    padding:8px;
+    display:none;
+    z-index:40;
+  }
+  .notif-panel.open{display:block;}
+  .notif-head{font-size:12px;font-weight:600;color:var(--text-2);padding:8px 10px 4px;}
+  .notif-item{
+    display:flex;gap:8px;align-items:flex-start;
+    padding:9px 10px;border-radius:12px;cursor:pointer;
+  }
+  .notif-item:hover{background:rgba(120,120,120,0.14);}
+  .notif-item .ndot{width:7px;height:7px;border-radius:50%;background:var(--accent);margin-top:5px;flex-shrink:0;}
+  .notif-item.read .ndot{background:transparent;}
+  .notif-item .ntext{font-size:12.5px;color:var(--text-1);line-height:1.4;}
+  .notif-item .ntime{font-size:11px;color:var(--text-3);margin-top:2px;}
+  .notif-empty{padding:20px 10px;text-align:center;font-size:12.5px;color:var(--text-3);}
+
+  /* Main area: dock + content */
+  .main{
+    display:flex;
+    gap:16px;
+    min-height:520px;
+  }
+
+  .dock{
+    width:56px;
+    flex-shrink:0;
+    background:var(--glass-strong);
+    border:1px solid var(--glass-border);
+    border-radius:28px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:16px 0;
+    gap:8px;
+  }
+  .dock-item{
+    width:38px;height:38px;
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--text-2);
+    cursor:pointer;
+    transition:all 0.15s ease;
+    border:none;background:transparent;
+  }
+  .dock-item:hover{background:rgba(120,120,120,0.14);color:var(--text-1);}
+  .dock-item.active{background:var(--text-1);color:var(--wall-1);}
+  [data-theme="dark"] .dock-item.active{background:#f2f0ec;color:#1c1b19;}
+  .dock-spacer{flex:1;}
+
+  .content{
+    flex:1;
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+
+  .content-head{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    padding:2px 4px;
+  }
+  .content-head h1{
+    font-size:20px;font-weight:600;margin:0;color:var(--text-1);
+  }
+  .content-head span{font-size:13px;color:var(--text-2);}
+
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));
+    gap:14px;
+    align-content:start;
+  }
+
+  .card{
+    background:var(--glass-strong);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-md);
+    padding:16px;
+    cursor:pointer;
+    transition:transform 0.16s ease, background 0.16s ease;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    min-height:150px;
+    position:relative;
+    box-shadow:inset 0 1px 0 var(--glass-hi);
+  }
+  .card:hover{transform:translateY(-3px);}
+  .card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+  .card-icon{
+    width:34px;height:34px;border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-size:14px;font-weight:600;
+    flex-shrink:0;
+    box-shadow:0 4px 10px rgba(0,0,0,0.15);
+  }
+  .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+  .card-title{font-size:15px;font-weight:600;color:var(--text-1);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px;}
+  .card-body{
+    font-size:13px;line-height:1.5;color:var(--text-2);
+    flex:1;
+    display:-webkit-box;
+    -webkit-line-clamp:4;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+  }
+  .card-foot{font-size:11px;color:var(--text-3);}
+  .card-del{
+    position:absolute;top:12px;right:12px;
+    width:22px;height:22px;border-radius:50%;
+    background:rgba(120,120,120,0.16);
+    border:none;color:var(--text-2);
+    display:none;align-items:center;justify-content:center;
+    cursor:pointer;font-size:12px;
+  }
+  .card:hover .card-del{display:flex;}
+
+  .new-card{
+    border:1.5px dashed var(--glass-border);
+    background:transparent;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--text-3);
+    font-size:28px;
+    font-weight:300;
+    min-height:140px;
+    box-shadow:none;
+  }
+  .new-card:hover{color:var(--accent);border-color:var(--accent);background:var(--accent-soft);}
+
+  .empty{
+    grid-column:1 / -1;
+    text-align:center;
+    padding:60px 20px;
+    color:var(--text-3);
+    font-size:14px;
+  }
+
+  /* Bottom pill nav */
+  .pillbar{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    padding:4px;
+  }
+  .pills{
+    display:flex;
+    gap:6px;
+    background:var(--glass-strong);
+    border:1px solid var(--glass-border);
+    border-radius:999px;
+    padding:6px;
+    flex-wrap:wrap;
+    justify-content:center;
+  }
+  .pill{
+    border:none;background:transparent;
+    padding:9px 18px;
+    border-radius:999px;
+    font-size:13px;font-weight:500;
+    color:var(--text-2);
+    cursor:pointer;
+    font-family:inherit;
+    transition:all 0.15s ease;
+    white-space:nowrap;
+  }
+  .pill.active{background:var(--text-1);color:var(--wall-1);}
+  [data-theme="dark"] .pill.active{background:#f2f0ec;color:#1c1b19;}
+  .pill-add{
+    width:38px;height:38px;
+    border-radius:50%;
+    background:var(--glass-strong);
+    border:1px solid var(--glass-border);
+    color:var(--text-1);
+    font-size:18px;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+  .pill-add:hover{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+  /* Overlays (editor / profile / name-gate) */
+  .overlay{
+    position:fixed;inset:0;
+    background:rgba(20,18,14,0.35);
+    backdrop-filter:blur(6px);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:50;
+    padding:20px;
+  }
+  .overlay.open{display:flex;}
+  .editor{
+    width:100%;max-width:560px;
+    background:var(--glass-strong);
+    backdrop-filter:blur(46px) saturate(180%);
+    -webkit-backdrop-filter:blur(46px) saturate(180%);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow), inset 0 1px 0 var(--glass-hi);
+    padding:22px;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+  .editor.small{max-width:380px;}
+  .editor-head{display:flex;align-items:center;justify-content:space-between;}
+  .editor-head h2{font-size:15px;font-weight:600;margin:0;color:var(--text-2);}
+  .icon-btn{
+    width:30px;height:30px;border-radius:50%;
+    border:none;background:rgba(120,120,120,0.14);
+    color:var(--text-2);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;
+  }
+  .icon-btn:hover{background:rgba(120,120,120,0.24);}
+  .editor input.title{
+    border:none;background:transparent;outline:none;
+    font-size:22px;font-weight:600;color:var(--text-1);
+    font-family:inherit;padding:2px 0;
+  }
+  .editor input.title::placeholder{color:var(--text-3);}
+  .editor textarea{
+    border:none;background:transparent;outline:none;
+    font-size:14px;line-height:1.6;color:var(--text-1);
+    font-family:inherit;resize:vertical;
+    min-height:180px;padding:2px 0;
+  }
+  .editor textarea::placeholder{color:var(--text-3);}
+  .folder-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .folder-row span{font-size:12px;color:var(--text-2);}
+  .fchip{
+    padding:6px 13px;border-radius:999px;
+    font-size:12px;font-weight:500;
+    border:1px solid var(--glass-border);
+    background:transparent;color:var(--text-2);
+    cursor:pointer;font-family:inherit;
+  }
+  .fchip.active{background:var(--text-1);color:var(--wall-1);border-color:var(--text-1);}
+  [data-theme="dark"] .fchip.active{background:#f2f0ec;color:#1c1b19;border-color:#f2f0ec;}
+  .editor-foot{
+    display:flex;align-items:center;justify-content:space-between;
+    padding-top:6px;border-top:1px solid var(--glass-border);
+  }
+  .save-btn{
+    border:none;background:var(--accent);color:#fff;
+    padding:10px 22px;border-radius:999px;
+    font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;
+  }
+  .save-btn:hover{filter:brightness(1.08);}
+  .del-btn{
+    border:none;background:transparent;color:var(--text-3);
+    font-size:13px;cursor:pointer;font-family:inherit;
+  }
+  .del-btn:hover{color:#d64545;}
+
+  .field-label{font-size:12px;color:var(--text-2);margin-bottom:4px;display:block;}
+  .field-input{
+    width:100%;
+    border:1px solid var(--glass-border);
+    background:rgba(120,120,120,0.08);
+    border-radius:12px;
+    padding:11px 14px;
+    font-size:14px;color:var(--text-1);
+    font-family:inherit;outline:none;
+  }
+  .field-input:focus{border-color:var(--accent);}
+  .field-group{margin-bottom:4px;}
+
+  .avatar-lg{
+    width:56px;height:56px;border-radius:50%;
+    background:linear-gradient(135deg,#8f8f8f,#4a4a4a);
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-size:20px;font-weight:600;
+    margin:0 auto 4px;
+  }
+  .gate-copy{font-size:13px;color:var(--text-2);line-height:1.5;margin:-6px 0 4px;}
+
+  @media (max-width:760px){
+    .board{padding:16px;}
+    .topbar{flex-wrap:wrap;}
+    .brand{display:none;}
+    .who{order:1;}
+    .theme-toggle{order:2;}
+    .notif-wrap{order:3;margin-left:auto;}
+    .searchbar{order:4;flex-basis:100%;}
+    .dock{display:none;}
+  }
+</style>
+</head>
+<body>
+<div class="bg-wash"></div>
+<div class="blob blob1"></div>
+<div class="blob blob2"></div>
+<div class="blob blob3"></div>
+<div class="cursor-glow" id="cursorGlow"></div>
+
+<div class="stage">
+  <div class="board">
+
+    <div class="topbar">
+      <div class="brand">b2kproedit</div>
+      <div class="who" onclick="openProfileEditor()" title="Edit profile">
+        <div class="avatar" id="avatarInit">?</div>
+        <span class="name" id="greetName">Welcome</span>
+        <span class="edit-hint">edit</span>
+      </div>
+      <div class="searchbar">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="searchInput" type="text" placeholder="Search your notes…">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity:0.45;flex-shrink:0;"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+      </div>
+      <div class="theme-toggle">
+        <button id="btnLight" class="active" onclick="setTheme('light')">☀ Light</button>
+        <button id="btnDark" onclick="setTheme('dark')">☾ Dark</button>
+      </div>
+      <div class="notif-wrap">
+        <button class="icon-circle" id="bellBtn" onclick="toggleNotif(event)" aria-label="Notifications">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="notif-dot" id="notifDot"></span>
+        </button>
+        <div class="notif-panel" id="notifPanel">
+          <div class="notif-head">Notifications</div>
+          <div id="notifList"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="dock">
+        <button class="dock-item active" title="All notes">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        </button>
+        <button class="dock-item" title="Sort by recent" onclick="sortNotes('recent')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="6" y1="6" x2="18" y2="6"/><line x1="6" y1="12" x2="14" y2="12"/><line x1="6" y1="18" x2="10" y2="18"/></svg>
+        </button>
+        <button class="dock-item" title="Sort A–Z" onclick="sortNotes('alpha')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 17V7a2 2 0 0 1 4 0v10"/><path d="M4 13h4"/><path d="M14 7l3 10 3-10"/></svg>
+        </button>
+        <div class="dock-spacer"></div>
+        <button class="dock-item" title="New note" onclick="openEditor()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+      </div>
+
+      <div class="content">
+        <div class="content-head">
+          <h1 id="folderTitle">All notes</h1>
+          <span id="noteCount">0 notes</span>
+        </div>
+        <div class="grid" id="grid"></div>
+      </div>
+    </div>
+
+    <div class="pillbar">
+      <div class="pills" id="pillList"></div>
+      <button class="pill-add" onclick="openEditor()" title="New note">+</button>
+    </div>
+
+  </div>
+  <div class="stand">
+    <div class="stand-leg l"></div>
+    <div class="stand-leg r"></div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="editor">
+    <div class="editor-head">
+      <h2 id="editorMode">New note</h2>
+      <button class="icon-btn" onclick="closeEditor()">✕</button>
+    </div>
+    <input class="title" id="editTitle" placeholder="Title" maxlength="80">
+    <textarea id="editBody" placeholder="Start writing…"></textarea>
+    <div class="folder-row">
+      <span>Folder</span>
+      <div id="folderChips"></div>
+    </div>
+    <div class="editor-foot">
+      <button class="del-btn" id="editDelBtn" onclick="deleteCurrent()">Delete note</button>
+      <button class="save-btn" onclick="saveCurrent()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="profileOverlay">
+  <div class="editor small">
+    <div class="editor-head">
+      <h2>Edit profile</h2>
+      <button class="icon-btn" onclick="closeProfileEditor()">✕</button>
+    </div>
+    <div class="avatar-lg" id="profileAvatarPreview">?</div>
+    <div class="field-group">
+      <label class="field-label">First name</label>
+      <input class="field-input" id="profFirst" placeholder="First name" maxlength="30">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Last name</label>
+      <input class="field-input" id="profLast" placeholder="Last name" maxlength="30">
+    </div>
+    <div class="editor-foot" style="border-top:none;padding-top:0;justify-content:flex-end;">
+      <button class="save-btn" onclick="saveProfile()">Save profile</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay open" id="gateOverlay">
+  <div class="editor small">
+    <div class="editor-head">
+      <h2>Set up your board</h2>
+    </div>
+    <div class="avatar-lg">?</div>
+    <p class="gate-copy">Tell us your name so we can set up your notepad.</p>
+    <div class="field-group">
+      <label class="field-label">First name</label>
+      <input class="field-input" id="gateFirst" placeholder="First name" maxlength="30">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Last name</label>
+      <input class="field-input" id="gateLast" placeholder="Last name" maxlength="30">
+    </div>
+    <div class="editor-foot" style="border-top:none;padding-top:0;justify-content:flex-end;">
+      <button class="save-btn" onclick="submitGate()">Continue</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const FOLDERS = [
+  { id:'ideas',   name:'Ideas',   color:'#f4a340' },
+  { id:'work',    name:'Work',    color:'#3d7dfb' },
+  { id:'journal', name:'Journal', color:'#c25fd0' },
+  { id:'todo',    name:'To-do',   color:'#39b26b' },
+];
+
+let notes = [
+  { id: cryptoId(), title:'Welcome to b2kproedit', body:'This is a glass note. Tap any card to open it, or hit + to start a new one. Notes live only in this browser tab for now.', folder:'ideas', updated: Date.now() },
+  { id: cryptoId(), title:'Ship the redesign', body:'Finish the dashboard cards, check contrast in dark mode, then walk the team through it Friday.', folder:'work', updated: Date.now()-3600000 },
+  { id: cryptoId(), title:'Morning pages', body:'Slept well. Want to get outside more this week — maybe a walk before the first meeting each day.', folder:'journal', updated: Date.now()-7200000 },
+];
+
+let notifications = [
+  { id:1, text:'Your note "Ship the redesign" was updated', time:'2h ago', read:false },
+  { id:2, text:'Welcome to b2kproedit — set up your profile to get started', time:'1d ago', read:false },
+  { id:3, text:'2 notes are waiting in Ideas', time:'2d ago', read:true },
+];
+
+let user = { first:'', last:'' };
+let activeFolder = 'all';
+let editingId = null;
+let searchQuery = '';
+
+function cryptoId(){ return 'n_' + Math.random().toString(36).slice(2,10); }
+function folderInfo(id){ return FOLDERS.find(f=>f.id===id); }
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function setTheme(mode){
+  document.body.setAttribute('data-theme', mode === 'dark' ? 'dark' : 'light');
+  document.getElementById('btnLight').classList.toggle('active', mode==='light');
+  document.getElementById('btnDark').classList.toggle('active', mode==='dark');
+}
+
+function timeAgo(ts){
+  const diff = Date.now() - ts;
+  const m = Math.floor(diff/60000);
+  if(m < 1) return 'just now';
+  if(m < 60) return m + 'm ago';
+  const h = Math.floor(m/60);
+  if(h < 24) return h + 'h ago';
+  const d = Math.floor(h/24);
+  return d + 'd ago';
+}
+
+/* ---------- profile / name gate ---------- */
+function initials(){
+  const i = ((user.first[0]||'') + (user.last[0]||'')).toUpperCase();
+  return i || '?';
+}
+function updateGreeting(){
+  document.getElementById('greetName').textContent = user.first ? ('Welcome, ' + user.first) : 'Welcome';
+  document.getElementById('avatarInit').textContent = initials();
+}
+function submitGate(){
+  const first = document.getElementById('gateFirst').value.trim();
+  const last = document.getElementById('gateLast').value.trim();
+  if(!first){
+    document.getElementById('gateFirst').focus();
+    document.getElementById('gateFirst').style.borderColor = '#e5484d';
+    return;
+  }
+  user.first = first;
+  user.last = last;
+  updateGreeting();
+  document.getElementById('gateOverlay').classList.remove('open');
+}
+function openProfileEditor(){
+  document.getElementById('profFirst').value = user.first;
+  document.getElementById('profLast').value = user.last;
+  document.getElementById('profileAvatarPreview').textContent = initials();
+  document.getElementById('profileOverlay').classList.add('open');
+}
+function closeProfileEditor(){
+  document.getElementById('profileOverlay').classList.remove('open');
+}
+function saveProfile(){
+  const first = document.getElementById('profFirst').value.trim();
+  const last = document.getElementById('profLast').value.trim();
+  if(!first){
+    document.getElementById('profFirst').focus();
+    document.getElementById('profFirst').style.borderColor = '#e5484d';
+    return;
+  }
+  user.first = first;
+  user.last = last;
+  updateGreeting();
+  closeProfileEditor();
+}
+
+/* ---------- notifications ---------- */
+function renderNotifs(){
+  const list = document.getElementById('notifList');
+  if(notifications.length === 0){
+    list.innerHTML = '<div class="notif-empty">You are all caught up.</div>';
+  } else {
+    list.innerHTML = notifications.map(n => `
+      <div class="notif-item ${n.read?'read':''}" onclick="markRead(${n.id})">
+        <div class="ndot"></div>
+        <div>
+          <div class="ntext">${escapeHtml(n.text)}</div>
+          <div class="ntime">${n.time}</div>
+        </div>
+      </div>`).join('');
+  }
+  const unread = notifications.some(n=>!n.read);
+  document.getElementById('notifDot').classList.toggle('show', unread);
+}
+function markRead(id){
+  const n = notifications.find(x=>x.id===id);
+  if(n) n.read = true;
+  renderNotifs();
+}
+function toggleNotif(e){
+  e.stopPropagation();
+  document.getElementById('notifPanel').classList.toggle('open');
+}
+document.addEventListener('click', (e)=>{
+  const panel = document.getElementById('notifPanel');
+  const wrap = document.querySelector('.notif-wrap');
+  if(panel.classList.contains('open') && !wrap.contains(e.target)){
+    panel.classList.remove('open');
+  }
+});
+
+/* ---------- notes ---------- */
+function renderPills(){
+  const list = document.getElementById('pillList');
+  const all = [{id:'all', name:'All notes'}, ...FOLDERS];
+  list.innerHTML = all.map(f =>
+    `<button class="pill ${activeFolder===f.id?'active':''}" onclick="selectFolder('${f.id}')">${f.name}</button>`
+  ).join('');
+}
+function selectFolder(id){
+  activeFolder = id;
+  renderPills();
+  renderGrid();
+}
+function sortNotes(mode){
+  if(mode==='recent') notes.sort((a,b)=>b.updated-a.updated);
+  if(mode==='alpha') notes.sort((a,b)=>a.title.localeCompare(b.title));
+  renderGrid();
+}
+function renderGrid(){
+  const grid = document.getElementById('grid');
+  let list = notes.filter(n => activeFolder==='all' || n.folder===activeFolder);
+  if(searchQuery.trim()){
+    const q = searchQuery.toLowerCase();
+    list = list.filter(n => n.title.toLowerCase().includes(q) || n.body.toLowerCase().includes(q));
+  }
+  list.sort((a,b)=>b.updated-a.updated);
+
+  document.getElementById('folderTitle').textContent =
+    activeFolder==='all' ? 'All notes' : folderInfo(activeFolder).name;
+  document.getElementById('noteCount').textContent = list.length + (list.length===1?' note':' notes');
+
+  if(list.length === 0){
+    grid.innerHTML = `<div class="empty">No notes here yet. Tap the plus below to write one.</div>` + newCardHtml();
+    return;
+  }
+
+  grid.innerHTML = list.map(n => {
+    const f = folderInfo(n.folder);
+    const initial = (n.title || 'U').trim().charAt(0).toUpperCase() || 'U';
+    return `
+      <div class="card" onclick="openEditor('${n.id}')">
+        <button class="card-del" onclick="event.stopPropagation(); quickDelete('${n.id}')" title="Delete">✕</button>
+        <div class="card-top">
+          <div class="card-icon" style="background:${f ? f.color : '#8a7864'}">${initial}</div>
+        </div>
+        <div class="card-title">${escapeHtml(n.title || 'Untitled')}</div>
+        <div class="card-body">${escapeHtml(n.body || '')}</div>
+        <div class="card-foot">${timeAgo(n.updated)}</div>
+      </div>`;
+  }).join('') + newCardHtml();
+}
+function newCardHtml(){
+  return `<div class="card new-card" onclick="openEditor()">+</div>`;
+}
+function quickDelete(id){
+  notes = notes.filter(n => n.id !== id);
+  renderGrid();
+}
+function openEditor(id){
+  editingId = id || null;
+  const overlay = document.getElementById('overlay');
+  const mode = document.getElementById('editorMode');
+  const delBtn = document.getElementById('editDelBtn');
+
+  let note = { title:'', body:'', folder: activeFolder!=='all' ? activeFolder : FOLDERS[0].id };
+  if(id){
+    note = notes.find(n=>n.id===id);
+    mode.textContent = 'Edit note';
+    delBtn.style.display = 'inline';
+  } else {
+    mode.textContent = 'New note';
+    delBtn.style.display = 'none';
+  }
+
+  document.getElementById('editTitle').value = note.title;
+  document.getElementById('editBody').value = note.body;
+  renderFolderChips(note.folder);
+
+  overlay.classList.add('open');
+  setTimeout(()=>document.getElementById('editTitle').focus(), 50);
+}
+function renderFolderChips(selected){
+  const wrap = document.getElementById('folderChips');
+  wrap.innerHTML = FOLDERS.map(f =>
+    `<button type="button" class="fchip ${f.id===selected?'active':''}" data-fid="${f.id}" onclick="pickChip('${f.id}')">${f.name}</button>`
+  ).join('');
+}
+function pickChip(id){
+  document.querySelectorAll('.fchip').forEach(el=>{
+    el.classList.toggle('active', el.dataset.fid === id);
+  });
+}
+function closeEditor(){
+  document.getElementById('overlay').classList.remove('open');
+  editingId = null;
+}
+function saveCurrent(){
+  const title = document.getElementById('editTitle').value.trim();
+  const body = document.getElementById('editBody').value.trim();
+  const activeChip = document.querySelector('.fchip.active');
+  const folder = activeChip ? activeChip.dataset.fid : FOLDERS[0].id;
+
+  if(!title && !body){ closeEditor(); return; }
+
+  if(editingId){
+    const n = notes.find(x=>x.id===editingId);
+    n.title = title || 'Untitled';
+    n.body = body;
+    n.folder = folder;
+    n.updated = Date.now();
+  } else {
+    notes.unshift({ id: cryptoId(), title: title || 'Untitled', body, folder, updated: Date.now() });
+  }
+  closeEditor();
+  renderGrid();
+}
+function deleteCurrent(){
+  if(editingId){
+    notes = notes.filter(n=>n.id!==editingId);
+  }
+  closeEditor();
+  renderGrid();
+}
+
+document.getElementById('searchInput').addEventListener('input', (e)=>{
+  searchQuery = e.target.value;
+  renderGrid();
+});
+document.getElementById('overlay').addEventListener('click', (e)=>{
+  if(e.target.id === 'overlay') closeEditor();
+});
+document.getElementById('profileOverlay').addEventListener('click', (e)=>{
+  if(e.target.id === 'profileOverlay') closeProfileEditor();
+});
+document.addEventListener('keydown', (e)=>{
+  if(e.key === 'Escape'){
+    closeEditor();
+    closeProfileEditor();
+  }
+});
+
+/* ---------- cursor glow ---------- */
+const glow = document.getElementById('cursorGlow');
+let gx = window.innerWidth/2, gy = window.innerHeight/2, tx = gx, ty = gy;
+document.addEventListener('mousemove', (e)=>{
+  tx = e.clientX; ty = e.clientY;
+  glow.style.opacity = '1';
+});
+document.addEventListener('mouseleave', ()=>{ glow.style.opacity = '0'; });
+function animateGlow(){
+  gx += (tx-gx)*0.08;
+  gy += (ty-gy)*0.08;
+  glow.style.left = gx + 'px';
+  glow.style.top = gy + 'px';
+  requestAnimationFrame(animateGlow);
+}
+animateGlow();
+
+/* ---------- init ---------- */
+renderPills();
+renderGrid();
+renderNotifs();
+updateGreeting();
+document.getElementById('gateFirst').focus();
+</script>
+</body>
+</html>
